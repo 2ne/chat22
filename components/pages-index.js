@@ -30,14 +30,9 @@ export function PagesIndexJs() {
   const socketInitializer = async () => {
     await fetch('/api/socket')
     
-    let socketUrl;
-    if (process.env.NODE_ENV === 'production') {
-      const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws';
-      const host = window.location.host;
-      socketUrl = `${protocol}://${host}`;
-    } else {
-      socketUrl = 'http://localhost:3001';
-    }
+    const socketUrl = process.env.NODE_ENV === 'production'
+      ? process.env.NEXT_PUBLIC_SOCKET_URL
+      : 'http://localhost:3001';
 
     socket = io(socketUrl, {
       path: process.env.NODE_ENV === 'production' ? '/api/socket' : '/socket.io',
