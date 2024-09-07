@@ -5,7 +5,6 @@ import useSWR from 'swr'
 import { NicknameModal } from './NicknameModal'
 import { ChatMessages } from './ChatMessages'
 import { ChatInput } from './ChatInput'
-import { ConnectionStatus } from './ConnectionStatus'
 
 const fetcher = (url) => fetch(url).then((res) => res.json())
 
@@ -70,7 +69,6 @@ export function PagesIndexJs() {
         {!messages && <div>Loading...</div>}
         {messages && <ChatMessages messages={messages} currentUser={nickname} />}
         <ChatInput onSendMessage={sendMessage} connected={!!messages} />
-        <ConnectionStatus connected={!!messages} />
       </div>
     </div>
   )
