@@ -26,14 +26,15 @@ export function PagesIndexJs() {
         timestamp: new Date().toISOString(),
       }
       try {
-        await fetch('/api/messages', {
+        const response = await fetch('/api/messages', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ type: 'message', data: newMessage }),
         })
-        mutate()
+        const updatedData = await response.json()
+        mutate(updatedData, false) // Update the local data without revalidation
       } catch (error) {
         console.error('Failed to send message:', error)
       }
@@ -42,14 +43,15 @@ export function PagesIndexJs() {
 
   const updateTypingStatus = useCallback(async (isTyping) => {
     try {
-      await fetch('/api/messages', {
+      const response = await fetch('/api/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ type: 'typing', data: { nickname, isTyping } }),
       })
-      mutate()
+      const updatedData = await response.json()
+      mutate(updatedData, false) // Update the local data without revalidation
     } catch (error) {
       console.error('Failed to update typing status:', error)
     }
