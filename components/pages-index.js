@@ -28,12 +28,11 @@ export function PagesIndexJs() {
   }, [nickname])
 
   const socketInitializer = async () => {
-    await fetch('/api/socket')
+    await fetch('/api/socket');
     
     socket = io({
       path: '/api/socketio',
-      addTrailingSlash: false,
-    })
+    });
 
     socket.on('connect', () => {
       console.log('Connected to server')
