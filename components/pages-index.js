@@ -30,12 +30,11 @@ export function PagesIndexJs() {
   const socketInitializer = async () => {
     await fetch('/api/socket')
     
-    const socketUrl = process.env.NODE_ENV === 'production'
-      ? process.env.NEXT_PUBLIC_SOCKET_URL
-      : 'http://localhost:3001';
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
+    console.log('Connecting to socket URL:', socketUrl); // Add this log
 
     socket = io(socketUrl, {
-      path: process.env.NODE_ENV === 'production' ? '/api/socket' : '/socket.io',
+      path: '/socket.io',
       transports: ['websocket', 'polling'],
     })
 
