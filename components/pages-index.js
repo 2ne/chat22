@@ -28,13 +28,13 @@ export function PagesIndexJs() {
   }, [nickname])
 
   const socketInitializer = async () => {
-    await fetch('/api/socket')
+    // Remove this line:
+    // await fetch('/api/socket')
     
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
-    console.log('Connecting to socket URL:', socketUrl); // Add this log
+    console.log('Connecting to socket URL:', socketUrl);
 
     socket = io(socketUrl, {
-      path: '/socket.io',
       transports: ['websocket', 'polling'],
     })
 
