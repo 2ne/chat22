@@ -30,8 +30,9 @@ export function PagesIndexJs() {
   const socketInitializer = async () => {
     await fetch('/api/socket')
     
-    socket = io(undefined, {
+    socket = io({
       path: '/api/socketio',
+      addTrailingSlash: false,
     })
 
     socket.on('connect', () => {

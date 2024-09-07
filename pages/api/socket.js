@@ -10,6 +10,11 @@ const SocketHandler = (req, res) => {
   const io = new Server(res.socket.server, {
     path: '/api/socketio',
     addTrailingSlash: false,
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST'],
+    },
+    transports: ['websocket', 'polling'],
   });
   res.socket.server.io = io;
 
@@ -34,6 +39,12 @@ const SocketHandler = (req, res) => {
 
   console.log('Socket is initialized');
   res.end();
+};
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
 };
 
 export default SocketHandler;
