@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import useSWR from 'swr'
 import { NicknameModal } from './NicknameModal'
 import { ChatMessages } from './ChatMessages'
@@ -12,7 +12,7 @@ export function PagesIndexJs() {
   const [nickname, setNickname] = useState('')
   const [showModal, setShowModal] = useState(true)
 
-  const { data: messages, error, mutate } = useSWR('/api/messages', fetcher, {
+  const { data, mutate } = useSWR('/api/messages', fetcher, {
     refreshInterval: 1000,
     revalidateOnFocus: false,
     dedupingInterval: 1000
@@ -30,14 +30,22 @@ export function PagesIndexJs() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newMessage),
+        body: JSON.stringify({ type: 'message', data: newMessage }),
       })
-      // Optimistic update
-      mutate((currentMessages) => [...currentMessages, newMessage], false)
-      // Revalidate
       mutate()
     }
   }
+
+  const updateTypingStatus = useCallback(async (isTyping) => {
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ type: 'typing', data: { nickname, isTyping } }),
+    })
+    mutate()
+  }, [nickname, mutate])
 
   const handleNicknameSubmit = (userNickname) => {
     setNickname(userNickname)
@@ -65,10 +73,12 @@ export function PagesIndexJs() {
         </button>
       </header>
       <div className="flex-1 overflow-hidden flex flex-col">
-        {error && <div>Failed to load messages</div>}
-        {!messages && <div>Loading...</div>}
-        {messages && <ChatMessages messages={messages} currentUser={nickname} />}
-        <ChatInput onSendMessage={sendMessage} connected={!!messages} />
+        {data && (
+          <>
+            <ChatMessages messages={data.messages} currentUser={nickname} typingUsers={data.typingUsers} />
+            <ChatInput onSendMessage={sendMessage} onTyping={updateTypingStatus} connected={true} />
+          </>
+        )}
       </div>
     </div>
   )

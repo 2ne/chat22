@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-export function ChatMessages({ messages, currentUser }) {
+export function ChatMessages({ messages, currentUser, typingUsers }) {
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
@@ -52,6 +52,11 @@ export function ChatMessages({ messages, currentUser }) {
           </div>
         )
       })}
+      {typingUsers.length > 0 && typingUsers.filter(user => user !== currentUser).length > 0 && (
+        <div className="text-sm text-gray-500 italic">
+          {typingUsers.filter(user => user !== currentUser).join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
+        </div>
+      )}
       <div ref={messagesEndRef} />
     </div>
   )

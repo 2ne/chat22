@@ -1,13 +1,36 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-export function ChatInput({ onSendMessage, connected }) {
+export function ChatInput({ onSendMessage, onTyping, connected }) {
   const [message, setMessage] = useState('')
+  const typingTimeoutRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const handleInputChange = (e) => {
+    setMessage(e.target.value)
+    onTyping(true)
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      onTyping(false)
+    }, 2000)
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (message.trim() && connected) {
       onSendMessage(message)
       setMessage('')
+      onTyping(false)
     }
   }
 
@@ -17,7 +40,7 @@ export function ChatInput({ onSendMessage, connected }) {
         <input
           type="text"
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleInputChange}
           className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Type your message..."
           disabled={!connected}
