@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove the rewrites section if you're not proxying requests through Next.js
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.externals.push({
+        bufferutil: "bufferutil",
+        "utf-8-validate": "utf-8-validate",
+      });
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

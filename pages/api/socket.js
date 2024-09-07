@@ -7,24 +7,28 @@ const SocketHandler = (req, res) => {
     return;
   }
 
-  console.log('Socket is initializing');
   const io = new Server(res.socket.server, {
     path: '/api/socketio',
+    addTrailingSlash: false,
   });
   res.socket.server.io = io;
 
-  io.on('connection', socket => {
-    console.log('New client connected');
-    
-    socket.on('send-message', msg => {
-      console.log('API route received message:', msg);
+  io.on('connection', (socket) => {
+    console.log('A user connected');
+
+    socket.on('send-message', (msg) => {
+      console.log('Server received message:', msg);
       io.emit('receive-message', msg);
-      console.log('API route broadcasted message');
+      console.log('Server emitted message to all clients');
     });
 
     socket.on('user-typing', ({ nickname, isTyping }) => {
       console.log(`${nickname} is ${isTyping ? 'typing' : 'not typing'}`);
       socket.broadcast.emit('user-typing', { nickname, isTyping });
+    });
+
+    socket.on('disconnect', () => {
+      console.log('User disconnected');
     });
   });
 
