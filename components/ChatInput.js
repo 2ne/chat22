@@ -9,8 +9,9 @@ export function ChatInput({ onSendMessage, onTyping, connected }) {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
       }
+      onTyping(false)
     }
-  }, [])
+  }, [onTyping])
 
   const handleInputChange = (e) => {
     setMessage(e.target.value)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import useSWR from 'swr'
 import { NicknameModal } from './NicknameModal'
 import { ChatMessages } from './ChatMessages'
@@ -12,7 +12,7 @@ export function PagesIndexJs() {
   const [nickname, setNickname] = useState('')
   const [showModal, setShowModal] = useState(true)
 
-  const { data, mutate } = useSWR('/api/messages', fetcher, {
+  const { data, error, mutate } = useSWR('/api/messages', fetcher, {
     refreshInterval: 1000,
     revalidateOnFocus: false,
     dedupingInterval: 1000
@@ -25,27 +25,42 @@ export function PagesIndexJs() {
         nickname,
         timestamp: new Date().toISOString(),
       }
+      try {
+        await fetch('/api/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ type: 'message', data: newMessage }),
+        })
+        mutate()
+      } catch (error) {
+        console.error('Failed to send message:', error)
+      }
+    }
+  }
+
+  const updateTypingStatus = useCallback(async (isTyping) => {
+    try {
       await fetch('/api/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type: 'message', data: newMessage }),
+        body: JSON.stringify({ type: 'typing', data: { nickname, isTyping } }),
       })
       mutate()
+    } catch (error) {
+      console.error('Failed to update typing status:', error)
     }
-  }
-
-  const updateTypingStatus = useCallback(async (isTyping) => {
-    await fetch('/api/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ type: 'typing', data: { nickname, isTyping } }),
-    })
-    mutate()
   }, [nickname, mutate])
+
+  useEffect(() => {
+    // Clear typing status when component unmounts
+    return () => {
+      updateTypingStatus(false)
+    }
+  }, [updateTypingStatus])
 
   const handleNicknameSubmit = (userNickname) => {
     setNickname(userNickname)
@@ -53,6 +68,7 @@ export function PagesIndexJs() {
   }
 
   const handleLogout = () => {
+    updateTypingStatus(false)
     setNickname('')
     setShowModal(true)
   }
@@ -73,10 +89,11 @@ export function PagesIndexJs() {
         </button>
       </header>
       <div className="flex-1 overflow-hidden flex flex-col">
+        {error && <div className="p-4 text-red-500">Failed to load messages</div>}
         {data && (
           <>
             <ChatMessages messages={data.messages} currentUser={nickname} typingUsers={data.typingUsers} />
-            <ChatInput onSendMessage={sendMessage} onTyping={updateTypingStatus} connected={true} />
+            <ChatInput onSendMessage={sendMessage} onTyping={updateTypingStatus} connected={!error} />
           </>
         )}
       </div>
