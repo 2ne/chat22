@@ -1,87 +1,43 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import io from 'socket.io-client'
+import { useState } from 'react'
+import useSWR from 'swr'
 import { NicknameModal } from './NicknameModal'
 import { ChatMessages } from './ChatMessages'
 import { ChatInput } from './ChatInput'
 import { ConnectionStatus } from './ConnectionStatus'
 
-let socket
+const fetcher = (url) => fetch(url).then((res) => res.json())
 
 export function PagesIndexJs() {
-  const [messages, setMessages] = useState([])
-  const [connected, setConnected] = useState(false)
   const [nickname, setNickname] = useState('')
   const [showModal, setShowModal] = useState(true)
-  const [typingUsers, setTypingUsers] = useState([])
 
-  useEffect(() => {
-    if (nickname) {
-      socketInitializer()
-    }
-    return () => {
-      if (socket) {
-        socket.disconnect()
-      }
-    }
-  }, [nickname])
+  const { data: messages, error, mutate } = useSWR('/api/messages', fetcher, {
+    refreshInterval: 1000,
+    revalidateOnFocus: false,
+    dedupingInterval: 1000
+  })
 
-  const socketInitializer = async () => {
-    await fetch('/api/socket');
-    
-    socket = io({
-      path: '/api/socketio',
-    });
-
-    socket.on('connect', () => {
-      console.log('Connected to server')
-      setConnected(true)
-    })
-
-    socket.on('receive-message', (msg) => {
-      console.log('Received message:', msg)
-      setMessages((prevMessages) => [...prevMessages, msg])
-    })
-
-    socket.on('user-typing', ({ nickname, isTyping }) => {
-      console.log(`Received typing event: ${nickname} is ${isTyping ? 'typing' : 'not typing'}`);
-      setTypingUsers(prev => {
-        const newTypingUsers = isTyping
-          ? [...new Set([...prev, nickname])]
-          : prev.filter(user => user !== nickname);
-        console.log('Updated typing users:', newTypingUsers);
-        return newTypingUsers;
-      })
-    })
-
-    socket.on('disconnect', () => {
-      console.log('Disconnected from server')
-      setConnected(false)
-    })
-
-    socket.on('connect_error', (err) => {
-      console.log('Connection error:', err)
-      setConnected(false)
-    })
-  }
-
-  const sendMessage = (message) => {
-    if (message && connected) {
+  const sendMessage = async (message) => {
+    if (message && nickname) {
       const newMessage = {
         text: message,
         nickname,
         timestamp: new Date().toISOString(),
       }
-      console.log('Sending message:', newMessage)
-      socket.emit('send-message', newMessage)
-      socket.emit('user-typing', { nickname, isTyping: false })
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newMessage),
+      })
+      // Optimistic update
+      mutate((currentMessages) => [...currentMessages, newMessage], false)
+      // Revalidate
+      mutate()
     }
-  }
-
-  const handleTyping = (isTyping) => {
-    console.log(`Emitting typing event: ${nickname} is ${isTyping ? 'typing' : 'not typing'}`);
-    socket.emit('user-typing', { nickname, isTyping })
   }
 
   const handleNicknameSubmit = (userNickname) => {
@@ -90,12 +46,7 @@ export function PagesIndexJs() {
   }
 
   const handleLogout = () => {
-    if (socket) {
-      socket.disconnect()
-    }
     setNickname('')
-    setMessages([])
-    setConnected(false)
     setShowModal(true)
   }
 
@@ -115,9 +66,11 @@ export function PagesIndexJs() {
         </button>
       </header>
       <div className="flex-1 overflow-hidden flex flex-col">
-        <ChatMessages messages={messages} currentUser={nickname} typingUsers={typingUsers} />
-        <ChatInput onSendMessage={sendMessage} connected={connected} onTyping={handleTyping} />
-        <ConnectionStatus connected={connected} />
+        {error && <div>Failed to load messages</div>}
+        {!messages && <div>Loading...</div>}
+        {messages && <ChatMessages messages={messages} currentUser={nickname} />}
+        <ChatInput onSendMessage={sendMessage} connected={!!messages} />
+        <ConnectionStatus connected={!!messages} />
       </div>
     </div>
   )

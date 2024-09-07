@@ -1,18 +1,18 @@
 import { useEffect, useRef } from 'react'
 
-export function ChatMessages({ messages, currentUser, typingUsers }) {
+export function ChatMessages({ messages, currentUser }) {
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, typingUsers])
+  }, [messages])
 
   const formatTime = (date) => {
-    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return new Date(date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   }
 
   const formatFullDate = (date) => {
-    return date.toLocaleString('en-GB', {
+    return new Date(date).toLocaleString('en-GB', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -52,11 +52,6 @@ export function ChatMessages({ messages, currentUser, typingUsers }) {
           </div>
         )
       })}
-      {typingUsers.length > 0 && (
-        <div className="text-sm text-gray-500 italic">
-          {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
-        </div>
-      )}
       <div ref={messagesEndRef} />
     </div>
   )
