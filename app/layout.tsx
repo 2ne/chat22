@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} font-sans`}>
+    <html lang="en" className={`${inter.variable} font-sans text-gray-800`}>
       <body>{children}</body>
     </html>
   )
